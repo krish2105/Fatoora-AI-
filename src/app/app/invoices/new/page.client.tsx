@@ -36,11 +36,17 @@ const invoiceSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>
 
-export default function InvoiceBuilderClient({ customers }: { customers: { id: string, name: string, trn: string | null }[] }) {
+export default function InvoiceBuilderClient({ 
+  customers, 
+  products 
+}: { 
+  customers: { id: string, name: string, trn: string | null }[],
+  products: { id: string, name: string, defaultUnitPrice: any, vatTreatment: string }[]
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<InvoiceFormValues>({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       items: [
@@ -172,12 +178,31 @@ export default function InvoiceBuilderClient({ customers }: { customers: { id: s
                     
                     <div className="grid grid-cols-12 gap-x-4 gap-y-6 items-start">
                       <div className="col-span-12 md:col-span-12 space-y-2">
-                        <Label className="text-slate-400 text-xs uppercase tracking-wider">Description</Label>
-                        <Input 
-                          className="bg-transparent border-0 border-b border-slate-700 rounded-none focus-visible:ring-0 focus-visible:border-emerald-500 px-0 h-10 text-base" 
-                          {...register(`items.${index}.description`)} 
-                          placeholder="Professional services..." 
-                        />
+                        <Label className="text-slate-400 text-xs uppercase tracking-wider">Product / Service</Label>
+                        <div className="flex gap-2">
+                          <Select onValueChange={(v) => {
+                            const p = products.find(prod => prod.id === v)
+                            if (p) {
+                              setValue(`items.${index}.description`, p.name)
+                              setValue(`items.${index}.unitPrice`, Number(p.defaultUnitPrice))
+                              setValue(`items.${index}.vatTreatment`, p.vatTreatment as any)
+                            }
+                          }}>
+                            <SelectTrigger className="w-[200px] bg-slate-900/50 border-slate-700">
+                              <SelectValue placeholder="Select Product" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-slate-700">
+                              {products.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            className="flex-1 bg-transparent border-0 border-b border-slate-700 rounded-none focus-visible:ring-0 focus-visible:border-emerald-500 px-0 h-10 text-base" 
+                            {...register(`items.${index}.description`)} 
+                            placeholder="Or type custom description..." 
+                          />
+                        </div>
                         {errors.items?.[index]?.description && <p className="text-rose-500 text-xs">{errors.items[index]?.description?.message}</p>}
                       </div>
                       

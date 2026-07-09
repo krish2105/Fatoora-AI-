@@ -13,5 +13,20 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fatoora_app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/fatoora
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_placeholder}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_placeholder}
+    depends_on:
+      - db
+    restart: unless-stopped
+
 volumes:
   pgdata:

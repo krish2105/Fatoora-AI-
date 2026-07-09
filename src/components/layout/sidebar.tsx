@@ -47,17 +47,17 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-slate-950/95 backdrop-blur-xl border-r border-slate-800/60 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none",
+        "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-background/95 backdrop-blur-xl border-r border-border/60 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-800/60">
-          <Link href="/app/dashboard" className="text-xl font-bold text-emerald-400 tracking-tight flex items-center gap-2 text-glow">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-border/60">
+          <Link href="/app/dashboard" className="text-xl font-bold text-emerald-500 tracking-tight flex items-center gap-2 text-glow">
             <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center">
-              <div className="w-3 h-3 bg-emerald-400 rounded-sm" />
+              <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
             </div>
             Fatoora AI
           </Link>
-          <Button variant="ghost" size="icon" className="md:hidden text-slate-400 hover:text-white" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -72,8 +72,8 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
                   isActive 
-                    ? "text-emerald-400 bg-emerald-500/10 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]" 
-                    : "text-slate-400 hover:text-slate-50 hover:bg-slate-900/50"
+                    ? "text-emerald-500 bg-emerald-500/10 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
                 onClick={() => onClose()}
               >
@@ -82,7 +82,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
                 )}
                 <item.icon className={cn(
                   "h-5 w-5 transition-colors", 
-                  isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-slate-500 group-hover:text-slate-300"
+                  isActive ? "text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-muted-foreground group-hover:text-foreground"
                 )} />
                 <span className="relative z-10">{item.name}</span>
               </Link>
@@ -90,20 +90,20 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800/60 bg-slate-950/50">
+        <div className="p-4 border-t border-border/60 bg-muted/20">
           <Link
             href="/app/settings/company"
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
               pathname.startsWith('/app/settings')
-                ? "text-emerald-400 bg-emerald-500/10 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]" 
-                : "text-slate-400 hover:text-slate-50 hover:bg-slate-900/50"
+                ? "text-emerald-500 bg-emerald-500/10 shadow-[inset_4px_0_0_0_rgba(16,185,129,1)]" 
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             onClick={() => onClose()}
           >
             <Settings className={cn(
               "h-5 w-5 transition-colors",
-              pathname.startsWith('/app/settings') ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-slate-500 group-hover:text-slate-300"
+              pathname.startsWith('/app/settings') ? "text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "text-muted-foreground group-hover:text-foreground"
             )} />
             Settings
           </Link>

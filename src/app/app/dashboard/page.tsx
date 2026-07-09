@@ -1,18 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react'
-
-// Mock Data for charts
-const revenueData = [
-  { name: 'Jan', revenue: 4000, expenses: 2400 },
-  { name: 'Feb', revenue: 3000, expenses: 1398 },
-  { name: 'Mar', revenue: 2000, expenses: 9800 },
-  { name: 'Apr', revenue: 2780, expenses: 3908 },
-  { name: 'May', revenue: 1890, expenses: 4800 },
-  { name: 'Jun', revenue: 2390, expenses: 3800 },
-  { name: 'Jul', revenue: 3490, expenses: 4300 },
-]
+import { RevenueChart } from '@/components/charts/revenue-chart'
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +26,25 @@ export default async function DashboardPage() {
   const outputVat = invoices.filter(i => i.status !== 'VOID').reduce((sum, inv) => sum + inv.vatAmount.toNumber(), 0)
   const inputVat = expenses.filter(e => e.vatRecoverable).reduce((sum, exp) => sum + exp.vatAmount.toNumber(), 0)
   const netVat = outputVat - inputVat
+
+  const overdueInvoices = invoices.filter(i => i.status === 'OVERDUE')
+  const totalOverdue = overdueInvoices.reduce((sum, inv) => sum + inv.balanceDue.toNumber(), 0)
+
+  // Generate chart data for last 6 months
+  const chartData = Array.from({ length: 6 }).map((_, i) => {
+    const d = subMonths(new Date(), 5 - i)
+    const monthStart = startOfMonth(d)
+    const monthEnd = endOfMonth(d)
+    
+    const monthRevs = invoices.filter(inv => inv.issueDate && inv.issueDate >= monthStart && inv.issueDate <= monthEnd && inv.status !== 'VOID')
+    const monthExps = expenses.filter(exp => exp.expenseDate >= monthStart && exp.expenseDate <= monthEnd)
+    
+    return {
+      name: format(d, 'MMM'),
+      revenue: monthRevs.reduce((sum, inv) => sum + inv.totalAmount.toNumber(), 0),
+      expenses: monthExps.reduce((sum, exp) => sum + exp.totalAmount.toNumber(), 0)
+    }
+  })
 
   const isDataEmpty = invoices.length === 0 && expenses.length === 0
 
@@ -98,8 +107,8 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">AED 0.00</div>
-            <p className="text-xs text-emerald-500 mt-1">0 invoices overdue</p>
+            <div className="text-2xl font-bold text-white">AED {totalOverdue.toFixed(2)}</div>
+            <p className="text-xs text-amber-500 mt-1">{overdueInvoices.length} invoices overdue</p>
           </CardContent>
         </Card>
       </div>
@@ -111,21 +120,15 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="pl-2">
             {isDataEmpty ? (
-              <div className="h-[350px] w-full flex flex-col items-center justify-center border border-dashed border-slate-700/50 rounded-lg bg-slate-900/20 text-slate-400">
-                <div className="p-4 bg-slate-800/50 rounded-full mb-4">
-                  <LineChartIcon className="h-8 w-8 text-slate-500" />
+              <div className="h-[350px] w-full flex flex-col items-center justify-center border border-dashed border-border/50 rounded-lg bg-muted/20 text-muted-foreground">
+                <div className="p-4 bg-muted/50 rounded-full mb-4">
+                  <LineChartIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium">No financial data yet</p>
-                <p className="text-xs text-slate-500 mt-1">Create an invoice or upload an expense to see your cash flow.</p>
+                <p className="text-xs text-muted-foreground mt-1">Create an invoice or upload an expense to see your cash flow.</p>
               </div>
             ) : (
-              <div className="h-[350px] w-full flex items-center justify-center border border-dashed border-slate-700/50 rounded-lg bg-slate-900/20 text-emerald-500/50 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent"></div>
-                <div className="text-center z-10">
-                  <LineChartIcon className="h-10 w-10 mx-auto mb-3 text-emerald-500/50" />
-                  <span>Interactive Chart Preview</span>
-                </div>
-              </div>
+              <RevenueChart data={chartData} />
             )}
           </CardContent>
         </Card>
@@ -171,6 +174,56 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="glass-card animate-slide-up" style={{ animationDelay: '0.7s' }}>
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Invoices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {invoices.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No invoices created yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-muted-foreground uppercase bg-muted/20">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Invoice #</th>
+                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3 font-medium">Amount</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {invoices.slice(0, 5).map((inv) => (
+                    <tr key={inv.id} className="hover:bg-muted/10 transition-colors">
+                      <td className="px-4 py-3 font-medium">{inv.invoiceNumber}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {inv.issueDate ? format(inv.issueDate, 'MMM dd, yyyy') : 'N/A'}
+                      </td>
+                      <td className="px-4 py-3">AED {inv.totalAmount.toFixed(2)}</td>
+                      <td className="px-4 py-3">
+                        <Badge 
+                          variant="outline" 
+                          className={
+                            inv.status === 'PAID' ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' :
+                            inv.status === 'OVERDUE' ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' :
+                            inv.status === 'DRAFT' ? 'text-slate-400 border-slate-400/30 bg-slate-400/10' :
+                            'text-blue-500 border-blue-500/30 bg-blue-500/10'
+                          }
+                        >
+                          {inv.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

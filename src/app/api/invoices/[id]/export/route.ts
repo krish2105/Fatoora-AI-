@@ -1,86 +1,74 @@
-import { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { requireOrganization, prisma } from '@/lib/auth'
-import { canViewFinanceData } from '@/lib/permissions'
-import { successResponse, forbiddenResponse, notFoundResponse, errorResponse } from '@/lib/api-response'
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { organization, role, user } = await requireOrganization()
-
-    if (!canViewFinanceData(role)) {
-      return forbiddenResponse('Unauthorized to view finance data')
-    }
-
-    const { id } = await params
-
+    const { id } = await params;
+    const { organization } = await requireOrganization()
+    
     const invoice = await prisma.invoice.findFirst({
-      where: {
-        id: id,
+      where: { 
+        id,
         organizationId: organization.id
       },
       include: {
         customer: true,
-        lineItems: true
+        lineItems: true,
+        organization: {
+          include: { profile: true }
+        }
       }
     })
 
     if (!invoice) {
-      return notFoundResponse('Invoice not found')
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
-    const orgWithProfile = await prisma.organization.findUnique({
-      where: { id: organization.id },
-      include: { profile: true }
-    })
-    
-    // Prepare UAE Structured Invoice Export Format
-    const exportData = {
-      _disclaimer: "Structured export only. Not an official FTA submission.",
-      documentType: "Tax Invoice",
-      invoiceNumber: invoice.id,
-      issueDate: invoice.issueDate?.toISOString() || "",
-      dueDate: invoice.dueDate?.toISOString() || "",
-      seller: {
-        legalName: orgWithProfile?.profile?.legalName || organization.name,
-        trn: orgWithProfile?.profile?.trn || "MISSING_TRN",
-        address: orgWithProfile?.profile?.address || "MISSING_ADDRESS"
+    // Format as UAE structured e-invoice data (simplified example)
+    const structuredData = {
+      invoiceNumber: invoice.invoiceNumber,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      supplier: {
+        name: invoice.organization.name,
+        trn: invoice.organization.profile?.trn || '',
       },
-      buyer: {
-        legalName: invoice.customer.name,
-        trn: invoice.customer.trn,
-        address: invoice.customer.address
+      customer: {
+        name: invoice.customer?.name,
+        trn: invoice.customer?.trn,
+        email: invoice.customer?.email,
       },
       totals: {
-        subtotal: invoice.subtotal.toNumber(),
-        totalVat: invoice.vatAmount.toNumber(),
-        totalAmount: invoice.totalAmount.toNumber(),
-        currency: "AED"
+        subtotal: invoice.subtotal,
+        vatAmount: invoice.vatAmount,
+        totalAmount: invoice.totalAmount,
+        balanceDue: invoice.balanceDue,
       },
       lineItems: invoice.lineItems.map(item => ({
         description: item.description,
-        quantity: item.quantity.toNumber(),
-        unitPrice: item.unitPrice.toNumber(),
-        discount: item.discount.toNumber(),
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
         vatTreatment: item.vatTreatment,
-        vatAmount: item.vatAmount.toNumber(),
-        lineTotal: item.total.toNumber()
-      }))
+        vatRate: item.vatRate,
+        vatAmount: item.vatAmount,
+        totalAmount: item.total
+      })),
+      notes: invoice.notes,
+      createdAt: invoice.createdAt
     }
 
-    // Audit log
-    await prisma.auditLog.create({
-      data: {
-        organizationId: organization.id,
-        actorUserId: user.id,
-        action: "STRUCTURED_EXPORT_GENERATED",
-        entityType: "INVOICE",
-        entityId: invoice.id,
-        metadata: { timestamp: new Date().toISOString() }
-      }
+    return new NextResponse(JSON.stringify(structuredData, null, 2), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}.json"`,
+      },
     })
-
-    return successResponse(exportData)
-  } catch (err: any) {
-    return errorResponse(err.message, 500)
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

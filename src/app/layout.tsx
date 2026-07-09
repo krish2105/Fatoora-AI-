@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -21,18 +22,21 @@ export default function RootLayout({
   const isMockAuth = !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === 'pk_test_Y2xlcmsuZmxvd2luZy1tYXJ0ZW4tMTQubGNsLmRldiQ=';
 
   const content = (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans antialiased bg-slate-950 text-slate-50`}
+        className={`${inter.variable} font-sans antialiased bg-background text-foreground`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
-
-  if (isMockAuth) {
-    return content;
-  }
 
   return <ClerkProvider>{content}</ClerkProvider>;
 }

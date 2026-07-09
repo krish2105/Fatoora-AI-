@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
-import { PrismaClient, Role, User, Organization, OrganizationMember } from '@prisma/client'
+import { PrismaClient, Role, User, Organization, OrganizationMember, CompanyProfile } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 export const prisma = globalForPrisma.prisma || new PrismaClient()
@@ -54,7 +54,7 @@ export async function requireUser(): Promise<User> {
 export type OrganizationContext = {
   user: User
   member: OrganizationMember
-  organization: Organization
+  organization: Organization & { profile?: CompanyProfile | null }
   role: Role
 }
 
@@ -75,7 +75,11 @@ export async function requireOrganization(requestedOrgId?: string): Promise<Orga
       ...(requestedOrgId ? { organizationId: requestedOrgId } : {})
     },
     include: {
-      organization: true
+      organization: {
+        include: {
+          profile: true
+        }
+      }
     }
   })
 

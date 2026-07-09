@@ -11,5 +11,15 @@ export default async function NewInvoicePage() {
     select: { id: true, name: true, trn: true }
   })
 
-  return <InvoiceBuilderClient customers={customers} />
+  const productsData = await prisma.productService.findMany({
+    where: { organizationId: organization.id },
+    select: { id: true, name: true, defaultUnitPrice: true, vatTreatment: true }
+  })
+  
+  const products = productsData.map(p => ({
+    ...p,
+    defaultUnitPrice: Number(p.defaultUnitPrice)
+  }))
+
+  return <InvoiceBuilderClient customers={customers} products={products} />
 }

@@ -6,16 +6,17 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { UserButton } from '@clerk/nextjs'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="flex min-h-screen bg-background text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b bg-white dark:bg-slate-950 dark:border-slate-800 sticky top-0 z-30">
+        <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b bg-background border-border sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -30,10 +31,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY !== 'pk_test_Y2xlcmsuZmxvd2luZy1tYXJ0ZW4tMTQubGNsLmRldiQ=' ? (
               <UserButton />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
                 DEV
               </div>
             )}

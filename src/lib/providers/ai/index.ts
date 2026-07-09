@@ -32,17 +32,49 @@ class MockAIProvider implements AIProvider {
   async generateMonthlyFinanceSummary() { return "Mock summary: Great month!"; }
 }
 
+import OpenAI from "openai";
+
 class OpenAIProvider implements AIProvider {
+  private openai: OpenAI;
+
+  constructor() {
+    this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  }
+
   async extractExpenseDocument(fileUrl: string) {
     if (!env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing");
+    
+    const response = await this.openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a UAE VAT compliance assistant. Extract invoice data from the provided image/document. Return JSON matching the schema."
+        },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract the following from this receipt: date (YYYY-MM-DD), vendorName, trn (15 digits if present), totalAmount (number), vatAmount (number). Return a JSON object with these keys." },
+            { type: "image_url", image_url: { url: fileUrl } }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const resultText = response.choices[0]?.message?.content;
+    if (!resultText) throw new Error("Failed to extract data");
+
+    const parsed = JSON.parse(resultText);
+
     return {
-      date: new Date().toISOString().split("T")[0],
-      vendorName: "Real Vendor LLC",
-      trn: "100234567800003",
-      totalAmount: 2000.00,
-      vatAmount: 95.24,
-      confidence: 0.88,
-      rawOutput: { source: "openai" }
+      date: parsed.date || null,
+      vendorName: parsed.vendorName || null,
+      trn: parsed.trn || null,
+      totalAmount: typeof parsed.totalAmount === 'number' ? parsed.totalAmount : null,
+      vatAmount: typeof parsed.vatAmount === 'number' ? parsed.vatAmount : null,
+      confidence: 0.95,
+      rawOutput: parsed
     };
   }
   async generateCashflowInsight() { return "OpenAI Cashflow Insight..."; }

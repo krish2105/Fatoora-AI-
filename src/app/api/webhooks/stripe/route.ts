@@ -10,14 +10,9 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = await req.text();
-    const isValid = billingProvider.verifyWebhookSignature(payload, signature);
-    
-    if (!isValid) {
-      return errorResponse("Invalid signature", 400);
-    }
 
     // Process webhook
-    await billingProvider.handleStripeWebhook(payload);
+    await billingProvider.handleStripeWebhook(payload, signature);
 
     return successResponse({ received: true });
   } catch (err: unknown) {

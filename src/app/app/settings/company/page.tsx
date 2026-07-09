@@ -1,18 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { requireOrganization, prisma } from "@/lib/auth";
+import { CompanySettingsForm } from "@/components/forms/company-settings-form";
 
-export default function SettingsCompanyPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function SettingsCompanyPage() {
+  const { organization } = await requireOrganization();
+  const profile = await prisma.companyProfile.findUnique({
+    where: { organizationId: organization.id }
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Company Settings</h1>
       </div>
-      <Card className="border-slate-800 bg-slate-900/50 max-w-2xl">
+      <Card className="glass-card max-w-2xl">
         <CardHeader>
           <CardTitle>Organization Details</CardTitle>
           <CardDescription>Manage your legal entity name, TRN, and billing address.</CardDescription>
         </CardHeader>
-        <CardContent className="h-64 flex items-center justify-center text-slate-500">
-          Company Settings Form MVP is coming soon.
+        <CardContent>
+          <CompanySettingsForm organization={organization} profile={profile} />
         </CardContent>
       </Card>
     </div>
