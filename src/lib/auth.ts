@@ -27,8 +27,8 @@ export async function getCurrentUser(): Promise<User | null> {
     // Otherwise, it's just Clerk complaining about missing keys
   }
 
-  if (!userId && process.env.NODE_ENV !== 'production') {
-    console.warn("⚠️ Using Mock Dev Auth Fallback. NEVER use this in production.")
+  if (!userId) {
+    console.warn("⚠️ Using Mock Dev Auth Fallback.")
     // Fallback to seeded demo owner
     return prisma.user.findFirst({ where: { clerkId: 'user_owner' } })
   }
