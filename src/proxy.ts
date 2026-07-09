@@ -33,7 +33,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
     }
     
     // Bypass protect() if we are using a dummy key in development
-    const isMockAuth = !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes('dummy');
+    const isMockAuth = !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === 'pk_test_Y2xlcmsuZmxvd2luZy1tYXJ0ZW4tMTQubGNsLmRldiQ=';
     if (process.env.NODE_ENV !== 'production' && isMockAuth) {
       // Allow through without crashing Clerk
     } else {
