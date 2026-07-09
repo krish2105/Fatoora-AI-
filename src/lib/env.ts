@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 const serverSchema = z.object({
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/fatoora?schema=public"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   
   // Auth - Required in production
-  CLERK_SECRET_KEY: z.string().optional(),
+  CLERK_SECRET_KEY: z.string().optional().default("sk_test_dummy"),
   
   // AI
   AI_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
@@ -36,7 +36,7 @@ const serverSchema = z.object({
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   // Required in production
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional(),
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional().default("pk_test_dummy"),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
 });
 
