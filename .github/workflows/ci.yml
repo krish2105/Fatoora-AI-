@@ -1,0 +1,46 @@
+name: Fatoora AI CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
+    - name: Typecheck
+      run: npm run typecheck
+
+    - name: ESLint
+      run: npm run lint
+
+    - name: Unit Tests
+      run: npm run test:run
+
+    - name: Build Next.js
+      # We provide a mock URL to satisfy env validation during build phase
+      env:
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        # Mock keys to allow the build to complete without actual production credentials
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_mock
+        CLERK_SECRET_KEY: sk_test_mock
+      run: npm run build
