@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const serverSchema = z.object({
-  DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/fatoora?schema=public"),
+  POSTGRES_PRISMA_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/fatoora?schema=public"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   
   // Auth - Required in production
